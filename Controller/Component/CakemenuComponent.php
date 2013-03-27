@@ -46,7 +46,7 @@ class CakemenuComponent extends Component {
    * @return bool
    * */
   public function initialize($controller) {
-    
+
   }
 
   /**
@@ -55,11 +55,11 @@ class CakemenuComponent extends Component {
    * @return bool
    * */
   public function startup($controller) {
-    
+
   }
 
   public function shutdown($controller) {
-    
+
   }
 
   /**
@@ -70,7 +70,7 @@ class CakemenuComponent extends Component {
    * @return void
    * */
   public function beforeRender($controller) {
-    
+
   }
 
   /**
@@ -80,7 +80,7 @@ class CakemenuComponent extends Component {
    * @param string $cache if set to false it won't cache the menu, otherwise it's used to set the name of the cache file name
    * @return array array of allowed nodes
    */
-  public function nodes($options = array(), &$auth=null, $cache='menu') {
+  public function nodes($options = array(), &$auth=null, $cache = false) {
     $this->cache = $cache; //cache setting
     $this->auth = $auth; //auth instance
 
@@ -94,6 +94,40 @@ class CakemenuComponent extends Component {
       $nodes = $this->_filter($nodes);
     }
     return $nodes;
+  }
+
+  /**
+   * function which remove items based on key value pair
+   * @param array $nodes (menu array)
+   * @param string $key (the array key to search for)
+   * @param string $value (The value of the key)
+   * @return array array of allowed nodes
+   */
+  public function removeKey($nodes, $key, $value) {
+  	foreach ($nodes as $k => $v) {
+  		//Check children
+  		if (isset($v['children']) && count($v['children']) > 0) {
+  			$nodes[$k]['children'] = $this->removeKey($v['children'], $key, $value);
+  		}
+
+ 		//Normalize Value
+  		if($nodes[$k]['Menu'][$key] == '') {
+  			$nodes[$k]['Menu'][$key] = -9898999;
+  		}
+
+  		if ($nodes[$k]['Menu'][$key] == $value) { // Match
+  			if (count($nodes[$k]['children']) > 0) {
+  				$nodes[$k]['Menu']['link'] = null;
+  			} else {
+  				unset($nodes[$k]);
+  			}
+  		} else {
+  			if ($nodes[$k]['Menu']['link'] == '' && count($nodes[$k]['children']) == 0) {
+  				unset($nodes[$k]);
+  			}
+  		}
+  	}
+  	return $nodes;
   }
 
   /**
