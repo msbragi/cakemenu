@@ -105,8 +105,11 @@ class StrapmenuHelper extends AppHelper {
 	/*
 	 * Add crumb segment based on menu item selected
 	 */
-	function addCrumb($name, $link, $title) {
+	function addCrumb($name, $link, $title, $first) {
 		if($link == '#' || $link == '') {
+			if($first) {
+				return;
+			}
 			$link = null;
 		}
 		$this->Html->addCrumb($name, $link, array('title' => $title ? $title : $name));
@@ -148,8 +151,10 @@ class StrapmenuHelper extends AppHelper {
 		if($found) {
 			$menu = new Menu();
 			$data = $menu->getPath($found, array('id', 'name','title', 'link'));
+			$first = true;
 			foreach($data as $k => $v) {
-				$this->addCrumb($v['Menu']['name'], $v['Menu']['link'], $v['Menu']['title']);
+				$this->addCrumb($v['Menu']['name'], $v['Menu']['link'], $v['Menu']['title'], $first);
+				$first = false;				
 			}
 
 			// Not a perfect match add action and params
