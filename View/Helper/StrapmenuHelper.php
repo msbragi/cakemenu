@@ -43,7 +43,7 @@ class StrapmenuHelper extends AppHelper {
 			if(isset($value['children']) && count($value['children']) > 0){
 				$sub = $this->generate($value['children'], $level+1, $path);
 			}
-			$link = $this->_getLink($value, $sub);
+			$link = $this->_getLink($value, $sub, $level);
 
 			$options = array();
 			if($sub){
@@ -59,16 +59,16 @@ class StrapmenuHelper extends AppHelper {
 		}
 
 		$options = array();
-		if($sub) {
-			$options['class'] = 'nav';
-		} else {
+		if($level) { // SubMenu
 			$options['class'] = 'dropdown-menu';
+		} else {
+			$options['class'] = 'nav';
 		}
 		$tree = "\n".str_repeat("\t", $level) . $this->Html->tag('ul', implode("\n", $li), $options) . "\n".str_repeat("\t", $level);
 		return $tree;
 	}
 
-	function _getLink( $value, $sub ) {
+	function _getLink( $value, $sub, $level ) {
 		$link = '';
 		if($value['Menu']['link'] == '') {
 			$value['Menu']['link'] = '#';
@@ -91,10 +91,13 @@ class StrapmenuHelper extends AppHelper {
 			$options['class']       = 'dropdown-toggle';
 			$options['data-toggle'] = 'dropdown';
 			$options['data-hover']  = 'dropdown';
-			$name                  .= ' <b class="caret"></b>';
+			$options['data-close-others']  = 'false';
+		}
+		if($level == 0) {
+			$name .= ' <b class="caret"></b>';
 		}
 		if($value['Menu']['icon']) {
-			$name = '<i class="' . $value['Menu']['icon'] . '"></i>&nbsp;' . $name . " ";
+			$name = '<i class="' . $value['Menu']['icon'] . '"></i>&nbsp;' . $name;
 		}
 		if($value['Menu']['link'] != '#') {
 			$this->_links[$value['Menu']['id']] = $link;
@@ -154,7 +157,7 @@ class StrapmenuHelper extends AppHelper {
 			$first = true;
 			foreach($data as $k => $v) {
 				$this->addCrumb($v['Menu']['name'], $v['Menu']['link'], $v['Menu']['title'], $first);
-				$first = false;				
+				$first = false;
 			}
 
 			// Not a perfect match add action and params
