@@ -80,9 +80,9 @@ class CakemenuComponent extends Component {
    * @param string $cache if set to false it won't cache the menu, otherwise it's used to set the name of the cache file name
    * @return array array of allowed nodes
    */
-  public function nodes($options = array(), &$auth=null, $cache = false) {
+  public function nodes($options = array(), &$auth=null, $cache = 'cakemenu') {
     $this->cache = $cache; //cache setting
-    $this->auth = $auth; //auth instance
+    $this->auth  = $auth;  //auth instance
 
     $nodes = null;
     if ($this->cache != false && Configure::read('Cache.disable') != true) { //Use cache or not
@@ -137,18 +137,18 @@ class CakemenuComponent extends Component {
    * @return array of nodes
    */
   private function _useCache($options) {
-    $determinator = '';
-    if ($this->auth != null) {
-      if ($this->auth->getUserId() != null) {
-        $determinator = '_' . $this->auth->getUserId();
-      }
+	$determinator = '';
+	if ($this->auth != null) {
+		if ($this->auth->getUserId() != null) {
+			$determinator = '_' . $this->auth->getUserId();
+		}
     }
-    if ($this->cache != false) {
-      $nodes = $this->_fetch($options);
-      Cache::write($this->cache . $determinator, $nodes);
-    }
-    $data = Cache::read($this->cache . $determinator);
-    return $data;
+	$data = Cache::read($this->cache . $determinator);
+	if(!$data) {
+		$data = $this->_fetch($options);
+		Cache::write($this->cache . $determinator, $data);
+	}
+	return $data;
   }
 
   /**
@@ -231,7 +231,7 @@ class CakemenuComponent extends Component {
         $nodes[$key]['children'] = $this->_checkAllowed($value['children']);
       }
 
-      if (!$this->auth->isAllowed($link)) { //no rights
+      if (!$this->isAllowed($link)) { //no rights
         if (count($nodes[$key]['children']) > 0) { //node have children with rights
           $nodes[$key]['Menu']['link'] = null;
         } else {
@@ -245,6 +245,29 @@ class CakemenuComponent extends Component {
     }
     return $nodes;
   }
+  // Function to check the access for the controller / action
+  private function isAllowed($url = "") {
+  	if (is_array($url)) {
+  		$url = $this->cleanUrl($url) ;
+  	}
+  	$allow = false;
+  	$rules = $this->Session->read('Authake.cacheRules');
+  	if(@$rules) {
+  		foreach( $rules as $data ) {
+  			if(preg_match("/^({$data['Rule']['action']})$/i", $url, $matches)) {
+  				$allow = (int) $data['Rule']['permission'];
+  			}
+  		}
+  	}
+  	return $allow;
+  }
+
+  private function cleanUrl($url) {
+  	$clurl = array_intersect_key($url, array("controller" => '', "action" => '', "prefix" => '', "admin" => ''));
+  	return Router::url($clurl + array("base" => false));
+  }
+
+
 
 }
 
